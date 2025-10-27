@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>African Agtech Startup Ecosystem</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #ffffff;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .filters {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        #sankey {
+            width: 100%;
+            height: 800px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>African Agtech Startup Ecosystem</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-startups">68</div>
+                <div class="stat-label">Startups</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-accelerators">77</div>
+                <div class="stat-label">Accelerators</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-connections">106</div>
+                <div class="stat-label">Connections</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="categoryFilter">Category</label>
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="Livestock">Livestock (L-IRP)</option>
+                    <option value="French Speaking">French Speaking (PPI)</option>
+                    <option value="Regular">Regular (r-IRP)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="irpFilter">IRP Program</label>
+                <select id="irpFilter">
+                    <option value="all">All Programs</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="countryFilter">Country</label>
+                <select id="countryFilter">
+                    <option value="all">All Countries</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="sankey"></div>
+
+        <div class="legend" id="legend"></div>
+    </div>
+
+    <script>
+        const acceleratorMapping = {
+            "Google for Startups Accelerator: Africa Class 9": "Google for Startups Accelerator Africa",
+            "Google Launchpad Africa": "Google for Startups Accelerator Africa",
+            "GSMA AgriTech Accelerator (i4Ag fund)": "GSMA AgriTech Accelerator",
+            "CATAPULT: Inclusion Africa": "Catapult: Inclusion Africa",
+            "Katapult Africa Accelerator Program": "Katapult Africa Accelerator",
+            "Katapult Mauritius Accelerator": "Katapult Africa Accelerator",
+            "AgriTech4Kenya Acceleration Program": "AgriTech4Kenya Accelerator",
+            "AgriTech4Kenya Accelerator Program": "AgriTech4Kenya Accelerator",
+            "AgriTech4Kenya Innovation Challenge (Acceleration Program)": "AgriTech4Kenya Accelerator",
+            "Endeavor & FMO African Agri-Tech Scale-Up Program": "Endeavor-FMO African Agri-Tech Scale-Up Program",
+            "Endeavor-FMO African Agritech Scaleup Program": "Endeavor-FMO African Agri-Tech Scale-Up Program",
+            "Endeavor/FMO African Agri-Tech Scale-Up Program": "Endeavor-FMO African Agri-Tech Scale-Up Program",
+            "YouthADAPT Challenge (African Youth Adaptation Solutions Challenge)": "YouthADAPT Challenge",
+            "African Youth Adaptation Solutions Challenge (YouthADAPT Challenge)": "YouthADAPT Challenge",
+            "Founder Institute (Ghana)": "Founder Institute",
+            "Startupbootcamp Accelerator": "Startupbootcamp Afritech",
+            "ASIP Accelerator (Startupbootcamp Afritech)": "Startupbootcamp Afritech",
+            "Kosmos Innovation Center (KIC) Incubation Program": "Kosmos Innovation Center (KIC)",
+            "Kosmos Innovation Centre Agri-tech Challenge": "Kosmos Innovation Center (KIC)",
+            "Terna Innovation Zone Tunisia (TIZ) / Global Scaleup Program": "Terna Scaleup Program",
+        };
+
+        const rawData = [
+            ["MooMe i4Ag", "Tunisia", "GSMA AgriTech Accelerator (i4Ag fund)", "L-IRP 6"],
+            ["Emata", "Uganda", "CATAPULT: Inclusion Africa", "L-IRP 4"],
+            ["Emata", "Uganda", "Norrsken Impact Accelerator", "L-IRP 4"],
+            ["Emata", "Uganda", "Plug & Play Accelerator", "L-IRP 4"],
+            ["Samaking", "Kenya", "AgriTech4Kenya Innovation Challenge (Acceleration Program)", "L-IRP 4"],
+            ["AquaDeep", "Tunisia", "OceanHub Africa Accelerator", "PPI 4"],
+            ["DeepLeaf", "Morocco", "TASMU Accelerator", "PPI 4"],
+            ["aXiom Zorn", "Uganda", "Catapult: Inclusion Africa", "r-IRP 6"],
+            ["aXiom Zorn", "Uganda", "Alpha Pitch Competition at Africa Fintech Summit", "r-IRP 6"],
+            ["aXiom Zorn", "Uganda", "MEST Africa and Absa 2025 Challenge", "r-IRP 6"],
+            ["Coastal Biotech", "Tanzania", "Adaptation & Resilience ClimAccelerator (Climate KIC)", "r-IRP 6"],
+            ["Crop2Cash", "Nigeria", "GSMA Innovation Fund for Climate Resilience and Adaptation", "r-IRP 6"],
+            ["Crop2Cash", "Nigeria", "Google for Startups Accelerator Africa", "r-IRP 6"],
+            ["Delta Oil", "Egypt", "Changelabs Egypt", "r-IRP 6"],
+            ["VunaPay", "Kenya", "MIT Solve", "r-IRP 6"],
+            ["VunaPay", "Kenya", "Safaricom Spark", "r-IRP 6"],
+            ["VunaPay", "Kenya", "Latitude59 Pitch Competition", "r-IRP 6"],
+            ["VunaPay", "Kenya", "Antler", "r-IRP 6"],
+            ["Proteen", "Uganda", "Hult Prize Accelerator", "r-IRP 6"],
+            ["Aquarech", "Kenya", "Disruptive Agricultural Technology Program", "L-IRP 5"],
+            ["Aquarech", "Kenya", "Katapult Africa Accelerator", "L-IRP 5"],
+            ["Aquarech", "Kenya", "Katapult Africa Accelerator Program", "L-IRP 5"],
+            ["Cowtribe", "Ghana", "Seedstars Accelerator", "L-IRP 5"],
+            ["swiftVEE", "Namibia", "Google Launchpad Africa", "L-IRP 5"],
+            ["Kumulus Water", "Tunisia", "Mega Green Accelerator", "PPI 5"],
+            ["Kumulus Water", "Tunisia", "Terna Scaleup Program", "PPI 5"],
+            ["CoAmana", "Nigeria", "GSMA Innovation Fund for Climate Resilience and Adaptation", "r-IRP 5"],
+            ["eAgro", "Zimbabwe", "GoGettaz Africa", "r-IRP 5"],
+            ["Farm to Feed", "Kenya", "Catalyst Fund", "r-IRP 5"],
+            ["Foodlocker Limited", "Nigeria", "Founders Factory Africa – Venture Scale Programme", "r-IRP 5"],
+            ["Foodlocker Limited", "Nigeria", "MARL Accelerator", "r-IRP 5"],
+            ["Foodlocker Limited", "Nigeria", "U.S.–Nigeria Accelerator/Startup Connector", "r-IRP 5"],
+            ["iShamba", "Kenya", "Google for Startups Accelerator: Africa Class 9", "r-IRP 5"],
+            ["Releaf", "Nigeria", "Y Combinator", "r-IRP 5"],
+            ["Wfrley", "Egypt", "Raya FutureTECH Accelerator", "r-IRP 5"],
+            ["AgNexus", "Kenya", "AgriTech4Kenya Acceleration Program", "L-IRP 4"],
+            ["AgNexus", "Kenya", "AfricArise Investment Accelerator", "L-IRP 4"],
+            ["Agro Innova", "Ghana", "Endeavor-FMO African Agritech Scaleup Program", "L-IRP 4"],
+            ["Koolboks", "Nigeria", "Stability-and-Peace Accelerator", "L-IRP 4"],
+            ["Be Wireless Solutions", "Tunisia", "Terna Innovation Zone Tunisia (TIZ) / Global Scaleup Program", "PPI 4"],
+            ["Seabex SAS", "Tunisia", "Womentum (Womena)", "PPI 4"],
+            ["agriBORA", "Kenya", "Kenya Agribusiness Entrepreneurship Program 2025", "r-IRP 4"],
+            ["BIZY TECH Limited", "Tanzania", "PesaTech Accelerator", "r-IRP 4"],
+            ["BIZY TECH Limited", "Tanzania", "Vodacom Digital Accelerator", "r-IRP 4"],
+            ["Duhqa", "Kenya", "Techstars", "r-IRP 4"],
+            ["Duhqa", "Kenya", "Visa Africa Fintech Accelerator", "r-IRP 4"],
+            ["EzyAgric", "Uganda", "Endeavor & FMO African Agri-Tech Scale-Up Program", "r-IRP 4"],
+            ["Fresh In A Box", "Zimbabwe", "Generation Africa Fellowship Program (GAFP)", "r-IRP 4"],
+            ["Hello Tractor", "Kenya", "World Food Programme Innovation Accelerator", "r-IRP 4"],
+            ["Hello Tractor", "Kenya", "World Economic Forum UpLink Circulars Accelerator", "r-IRP 4"],
+            ["Hello Tractor", "Kenya", "Catapult: Inclusion Africa", "r-IRP 4"],
+            ["Hello Tractor", "Kenya", "Mastercard Start Path", "r-IRP 4"],
+            ["Kokari Coconut / JAM The Coconut Food Company", "Nigeria", "Africa Carbon Removal Accelerator (ACRA)", "r-IRP 4"],
+            ["Mavuno Technologies", "Tanzania", "Techstars Sustainability Accelerator", "r-IRP 4"],
+            ["ReNile", "Egypt", "OceanHub Africa Accelerator", "r-IRP 4"],
+            ["eVet Africa", "Nigeria", "ITU/World Food Forum Innovation Factory", "L-IRP 3"],
+            ["Vetsark/Cleva", "Nigeria", "Katapult Africa Accelerator Program", "L-IRP 3"],
+            ["MooMe", "Tunisia", "Tunisia Agritech Challenge", "L-IRP 3"],
+            ["MooMe", "Tunisia", "GSMA AgriTech Accelerator", "L-IRP 3"],
+            ["Agrosfer", "Benin", "Digital & Green Innovation Accelerator (DGIx)", "PPI 3"],
+            ["BILANGA Solutions", "Congo, Democratic Republic", "DRC Agribusiness Innovation Challenge", "PPI 3"],
+            ["Jangolo", "Cameroon", "Orange Fab", "PPI 3"],
+            ["Jangolo", "Cameroon", "Endeavor/FMO African Agri-Tech Scale-Up Program", "PPI 3"],
+            ["TOLBI", "Senegal", "Google for Startups Accelerator Africa", "PPI 3"],
+            ["Agrix Tech", "Cameroon", "ASIP Accelerator (Startupbootcamp Afritech)", "r-IRP 3"],
+            ["Arinifu", "Kenya", "YouthADAPT Challenge (African Youth Adaptation Solutions Challenge)", "r-IRP 3"],
+            ["Arinifu", "Kenya", "AgriTech4Kenya Accelerator Program", "r-IRP 3"],
+            ["Arinifu", "Kenya", "African Youth Adaptation Solutions Challenge (YouthADAPT Challenge)", "r-IRP 3"],
+            ["ePoultry.NG", "Nigeria", "Bubble Up Network", "r-IRP 3"],
+            ["FarmSpeak", "Nigeria", "GSMA AgriTech Accelerator", "r-IRP 3"],
+            ["FarmSpeak", "Nigeria", "Because Accelerator", "r-IRP 3"],
+            ["ifarm360", "Kenya", "Food Africa Accelerator", "r-IRP 3"],
+            ["Jabu Logistcs", "Namibia", "Y Combinator", "r-IRP 3"],
+            ["Kwidex", "Ghana", "Kosmos Innovation Centre Agri-tech Challenge", "r-IRP 3"],
+            ["Kwidex", "Ghana", "Qatar FinTech Hub Wave 2 Incubator Program", "r-IRP 3"],
+            ["Kwikbasket", "Kenya", "AgriTech4Kenya Accelerator Program", "r-IRP 3"],
+            ["Ninayo", "Tanzania", "Expa Labs", "r-IRP 3"],
+            ["Umojalands System", "Zimbabwe", "Inclusive Fintech 50 (IF50) Program", "r-IRP 3"],
+            ["Umojalands System", "Zimbabwe", "Solve for Africa Challenge 2022", "r-IRP 3"],
+            ["Afrimash", "Nigeria", "FATE Foundation Accelerator Program", "r-IRP 2"],
+            ["Afrimash", "Nigeria", "Tony Elumelu Foundation Entrepreneurship Programme", "r-IRP 2"],
+            ["Bankly", "Nigeria", "HiiL Justice Accelerator", "r-IRP 2"],
+            ["Bankly", "Nigeria", "GreenHouse Capital Female-Focused Tech Accelerator Program", "r-IRP 2"],
+            ["Bankly", "Nigeria", "Startupbootcamp Accelerator", "r-IRP 2"],
+            ["Bankly", "Nigeria", "TechCrunch Battlefield Africa", "r-IRP 2"],
+            ["GGEM Farming", "Malawi", "Praxis Labs Nonprofit Accelerator Showcase", "r-IRP 2"],
+            ["Grow For Me", "Ghana", "Kosmos Innovation Center (KIC) Incubation Program", "r-IRP 2"],
+            ["Grow For Me", "Ghana", "Founder Institute (Ghana)", "r-IRP 2"],
+            ["Grow For Me", "Ghana", "Africa4Future Aerospace Acceleration Program", "r-IRP 2"],
+            ["Maali Card / FitInsights", "Uganda", "Catapult: Inclusion Africa", "r-IRP 2"],
+            ["MyFugo", "Kenya", "AgriTech4Kenya Accelerator Program", "r-IRP 2"],
+            ["MyFugo", "Kenya", "MARL Accelerator", "r-IRP 2"],
+            ["Rural Farmers Hub", "Nigeria", "Katapult Mauritius Accelerator", "r-IRP 2"],
+            ["Rural Farmers Hub", "Nigeria", "Startupbootcamp Afritech", "r-IRP 2"],
+            ["Winich Farms", "Nigeria", "GSMA AgriTech Accelerator", "r-IRP 2"],
+            ["Afrikamart", "Senegal", "Katapult Africa Accelerator", "r-IRP 1"],
+            ["Bringo Fresh", "Uganda", "African Development Bank's AgriPitch Competition", "r-IRP 1"],
+            ["Bringo Fresh", "Uganda", "Youth Startup Academy Uganda (YSAU)", "r-IRP 1"],
+            ["eMsika", "Zambia", "Village Capital Agriculture Africa 2019 Accelerator", "r-IRP 1"],
+            ["eProd Solutions", "Kenya", "Africa-Korea AgTech Innovation Challenge & Summit", "r-IRP 1"],
+            ["eProd Solutions", "Kenya", "Impulse Accelerator", "r-IRP 1"],
+            ["Kitovu", "Nigeria", "Adaptation SME Accelerator Program (ASAP)", "r-IRP 1"],
+            ["Kitovu", "Nigeria", "Make-IT Accelerator (GIZ)", "r-IRP 1"],
+            ["Lentera", "Kenya", "Land Accelerator Africa", "r-IRP 1"],
+            ["Lentera", "Kenya", "Airbus Bizlab", "r-IRP 1"],
+            ["Zowasel", "Nigeria", "Founder Institute", "r-IRP 1"]
+        ];
+
+        const countryColors = {
+            'Kenya': '#e8533f',
+            'Nigeria': '#ff8c42',
+            'Uganda': '#ffb347',
+            'Tunisia': '#f4a460',
+            'Ghana': '#d4a373',
+            'Tanzania': '#cd853f',
+            'Egypt': '#e67451',
+            'Zimbabwe': '#c77547',
+            'Morocco': '#b8956a',
+            'Namibia': '#a67b5b',
+            'Cameroon': '#d2691e',
+            'Senegal': '#f08080',
+            'Benin': '#e9967a',
+            'Congo, Democratic Republic': '#bc8f8f',
+            'Malawi': '#daa520',
+            'Zambia': '#b8860b',
+            'Ethiopia': '#ff6347',
+            'Ivory Coast': '#fa8072',
+            'Togo': '#f4a460',
+            'Rwanda': '#cd5c5c',
+            'Liberia': '#d2691e',
+            'South Africa': '#a0522d'
+        };
+
+        const orderedAccelerators = [
+            "AfricArise Investment Accelerator",
+            "Africa-Korea AgTech Innovation Challenge & Summit",
+            "AgriTech4Kenya Accelerator",
+            "Airbus Bizlab",
+            "Antler",
+            "Catalyst Fund",
+            "Disruptive Agricultural Technology Program",
+            "Food Africa Accelerator",
+            "Impulse Accelerator",
+            "Katapult Africa Accelerator",
+            "Kenya Agribusiness Entrepreneurship Program 2025",
+            "Land Accelerator Africa",
+            "Latitude59 Pitch Competition",
+            "MIT Solve",
+            "Mastercard Start Path",
+            "Safaricom Spark",
+            "Techstars",
+            "Visa Africa Fintech Accelerator",
+            "World Economic Forum UpLink Circulars Accelerator",
+            "World Food Programme Innovation Accelerator",
+            "YouthADAPT Challenge",
+            "Adaptation SME Accelerator Program (ASAP)",
+            "Africa Carbon Removal Accelerator (ACRA)",
+            "Because Accelerator",
+            "Bubble Up Network",
+            "FATE Foundation Accelerator Program",
+            "Founders Factory Africa – Venture Scale Programme",
+            "GSMA Innovation Fund for Climate Resilience and Adaptation",
+            "Google for Startups Accelerator Africa",
+            "GreenHouse Capital Female-Focused Tech Accelerator Program",
+            "HiiL Justice Accelerator",
+            "ITU/World Food Forum Innovation Factory",
+            "MARL Accelerator",
+            "Make-IT Accelerator (GIZ)",
+            "Startupbootcamp Afritech",
+            "TechCrunch Battlefield Africa",
+            "Tony Elumelu Foundation Entrepreneurship Programme",
+            "U.S.–Nigeria Accelerator/Startup Connector",
+            "Y Combinator",
+            "African Development Bank's AgriPitch Competition",
+            "Alpha Pitch Competition at Africa Fintech Summit",
+            "Catapult: Inclusion Africa",
+            "Hult Prize Accelerator",
+            "MEST Africa and Absa 2025 Challenge",
+            "Norrsken Impact Accelerator",
+            "Plug & Play Accelerator",
+            "Youth Startup Academy Uganda (YSAU)",
+            "GSMA AgriTech Accelerator",
+            "Mega Green Accelerator",
+            "OceanHub Africa Accelerator",
+            "Terna Scaleup Program",
+            "Tunisia Agritech Challenge",
+            "Africa4Future Aerospace Acceleration Program",
+            "Endeavor-FMO African Agri-Tech Scale-Up Program",
+            "Founder Institute",
+            "Kosmos Innovation Center (KIC)",
+            "Qatar FinTech Hub Wave 2 Incubator Program",
+            "Seedstars Accelerator",
+            "Generation Africa Fellowship Program (GAFP)",
+            "GoGettaz Africa",
+            "Inclusive Fintech 50 (IF50) Program",
+            "Solve for Africa Challenge 2022",
+            "Adaptation & Resilience ClimAccelerator (Climate KIC)",
+            "Expa Labs",
+            "PesaTech Accelerator",
+            "Vodacom Digital Accelerator",
+            "Changelabs Egypt",
+            "Raya FutureTECH Accelerator",
+            "Orange Fab",
+            "Stability-and-Peace Accelerator",
+            "TASMU Accelerator",
+            "Womentum (Womena)",
+            "Techstars Sustainability Accelerator",
+            "DRC Agribusiness Innovation Challenge",
+            "Digital & Green Innovation Accelerator (DGIx)",
+            "Praxis Labs Nonprofit Accelerator Showcase",
+            "Village Capital Agriculture Africa 2019 Accelerator"
+        ];
+
+        let currentData = rawData.map(([startup, country, acc, irp]) => [
+            startup,
+            country,
+            acceleratorMapping[acc] || acc,
+            irp
+        ]);
+
+        function categorize(irp) {
+            if (irp.includes('L-IRP')) return 'Livestock';
+            if (irp.includes('PPI')) return 'French Speaking';
+            return 'Regular';
+        }
+
+        const irpPrograms = [...new Set(rawData.map(d => d[3]))].sort();
+        const irpFilter = document.getElementById('irpFilter');
+        irpPrograms.forEach(irp => {
+            const option = document.createElement('option');
+            option.value = irp;
+            option.textContent = irp;
+            irpFilter.appendChild(option);
+        });
+
+        // Populate country filter
+        const countryCounts = {};
+        currentData.forEach(([startup, country]) => {
+            countryCounts[country] = (countryCounts[country] || 0) + 1;
+        });
+        const countriesSorted = Object.keys(countryCounts).sort((a, b) => 
+            countryCounts[b] - countryCounts[a]
+        );
+        const countryFilter = document.getElementById('countryFilter');
+        countriesSorted.forEach(country => {
+            const option = document.createElement('option');
+            option.value = country;
+            option.textContent = country;
+            countryFilter.appendChild(option);
+        });
+
+        function updateChart() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const irpFilterValue = document.getElementById('irpFilter').value;
+            const countryFilterValue = document.getElementById('countryFilter').value;
+
+            const filteredData = currentData.filter(([startup, country, acc, irp]) => {
+                const category = categorize(irp);
+                const categoryMatch = categoryFilter === 'all' || category === categoryFilter;
+                const irpMatch = irpFilterValue === 'all' || irp === irpFilterValue;
+                const countryMatch = countryFilterValue === 'all' || country === countryFilterValue;
+                return categoryMatch && irpMatch && countryMatch;
+            });
+
+            // Get unique startups and order by country count
+            const startupCountryMap = {};
+            filteredData.forEach(([startup, country]) => {
+                startupCountryMap[startup] = country;
+            });
+            
+            const countryStartupCounts = {};
+            Object.values(startupCountryMap).forEach(country => {
+                countryStartupCounts[country] = (countryStartupCounts[country] || 0) + 1;
+            });
+            
+            const startups = [...new Set(filteredData.map(d => d[0]))].sort((a, b) => {
+                const countryA = startupCountryMap[a];
+                const countryB = startupCountryMap[b];
+                const countA = countryStartupCounts[countryA];
+                const countB = countryStartupCounts[countryB];
+                if (countB !== countA) return countB - countA;
+                if (countryA !== countryB) return countryA.localeCompare(countryB);
+                return a.localeCompare(b);
+            });
+
+            const accelerators = orderedAccelerators.filter(acc => 
+                filteredData.some(d => d[2] === acc)
+            );
+
+            document.getElementById('stat-startups').textContent = startups.length;
+            document.getElementById('stat-accelerators').textContent = accelerators.length;
+            document.getElementById('stat-connections').textContent = filteredData.length;
+
+            const nodes = [];
+            const nodeColors = [];
+
+            startups.forEach(startup => {
+                const country = filteredData.find(d => d[0] === startup)[1];
+                nodes.push(startup);
+                nodeColors.push(countryColors[country] || '#999');
+            });
+
+            accelerators.forEach(acc => {
+                nodes.push(acc);
+                nodeColors.push('#7f8c8d');
+            });
+
+            const sources = [];
+            const targets = [];
+            const values = [];
+            const linkColors = [];
+
+            filteredData.forEach(([startup, country, acc]) => {
+                sources.push(nodes.indexOf(startup));
+                targets.push(nodes.indexOf(acc));
+                values.push(1);
+                const baseColor = countryColors[country] || '#999';
+                linkColors.push(baseColor + '4D');
+            });
+
+            const sankeyData = {
+                type: "sankey",
+                orientation: "h",
+                node: {
+                    pad: 15,
+                    thickness: 20,
+                    line: { color: "white", width: 1 },
+                    label: nodes,
+                    color: nodeColors,
+                    customdata: nodes.map(n => {
+                        if (startups.includes(n)) {
+                            const country = filteredData.find(d => d[0] === n)[1];
+                            const irp = filteredData.find(d => d[0] === n)[3];
+                            return `${n}<br>Country: ${country}<br>Program: ${irp}`;
+                        }
+                        return n;
+                    }),
+                    hovertemplate: '%{customdata}<extra></extra>'
+                },
+                link: {
+                    source: sources,
+                    target: targets,
+                    value: values,
+                    color: linkColors
+                }
+            };
+
+            const layout = {
+                font: { size: 11, family: 'Segoe UI, sans-serif' },
+                margin: { l: 10, r: 10, t: 10, b: 10 },
+                paper_bgcolor: 'white',
+                plot_bgcolor: 'white'
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d']
+            };
+
+            Plotly.newPlot('sankey', [sankeyData], layout, config);
+        }
+
+        function createLegend() {
+            const legend = document.getElementById('legend');
+            const countries = [...new Set(currentData.map(d => d[1]))].sort();
+
+            countries.forEach(country => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = countryColors[country] || '#999';
+
+                const label = document.createElement('span');
+                label.textContent = country;
+
+                item.appendChild(colorBox);
+                item.appendChild(label);
+                legend.appendChild(item);
+            });
+        }
+
+        document.getElementById('categoryFilter').addEventListener('change', updateChart);
+        document.getElementById('irpFilter').addEventListener('change', updateChart);
+        document.getElementById('countryFilter').addEventListener('change', updateChart);
+
+        updateChart();
+        createLegend();
+    </script>
+</body>
+</html>
